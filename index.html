@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ride it out</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ride it out">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#E6ECEE" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#11181C" media="(prefers-color-scheme: dark)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Literata:opsz,wght@7..72,400;7..72,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#E6ECEE; --surface:#F3F6F7; --ink:#1D2A31; --muted:#5B6B72; --line:#C9D3D7;
+  --accent:#2E5E58; --accent-ink:#F3F6F7; --soft:#D6E2E1;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#11181C; --surface:#1A2328; --ink:#DCE5E8; --muted:#8A9AA1; --line:#2A363C;
+    --accent:#86BDB3; --accent-ink:#0F1A18; --soft:#1F3431;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#11181C; --surface:#1A2328; --ink:#DCE5E8; --muted:#8A9AA1; --line:#2A363C;
+  --accent:#86BDB3; --accent-ink:#0F1A18; --soft:#1F3431;
+}
+*,*::before,*::after{box-sizing:inherit}
+[hidden]{display:none !important}
+html{height:100%; scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  margin:0; min-height:100%; background:var(--bg); color:var(--ink);
+  font-family:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:1.0625rem; line-height:1.55; -webkit-font-smoothing:antialiased;
+}
+main{max-width:32rem; margin:0 auto; padding:1.25rem 1.5rem 6rem; min-height:100vh; display:flex; flex-direction:column}
+header{display:flex; align-items:center; justify-content:space-between; min-height:2.75rem; gap:1rem}
+.progress{display:flex; gap:.375rem}
+.progress span{width:1.75rem; height:3px; border-radius:2px; background:var(--line); transition:background .4s}
+.progress span.on{background:var(--accent)}
+.clock{font-variant-numeric:tabular-nums; color:var(--muted); font-size:.9375rem}
+.icon-btn{background:none; border:0; color:var(--muted); font:inherit; font-size:.9375rem; padding:.5rem; margin:-.5rem; cursor:pointer}
+.view{display:none; flex:1; flex-direction:column}
+.view.on{display:flex}
+section{display:none; flex:1; flex-direction:column; padding-top:2rem}
+section.active{display:flex; animation:in .5s ease both}
+.page{padding-top:2rem; display:flex; flex-direction:column; flex:1}
+@keyframes in{from{opacity:0}to{opacity:1}}
+.num{color:var(--muted); font-size:.9375rem; margin:0 0 .5rem}
+h1{font-family:"Literata",Georgia,serif; font-weight:400; font-size:clamp(2rem,8vw,2.625rem); line-height:1.15; letter-spacing:-.01em; margin:0 0 1rem}
+h2{font-family:"Literata",Georgia,serif; font-weight:400; font-size:1.375rem; margin:0 0 .5rem}
+p{margin:0 0 1rem; max-width:34ch}
+.lede{color:var(--muted)}
+.spacer{flex:1; min-height:1.5rem}
+.actions{display:flex; flex-direction:column; gap:.75rem; padding-top:1rem}
+.row{display:flex; gap:.75rem}
+.row > *{flex:1}
+button.primary,button.secondary,a.secondary{
+  font:inherit; font-weight:700; border-radius:999px; padding:1rem 1.5rem; cursor:pointer;
+  text-align:center; text-decoration:none; display:block; width:100%
+}
+button.primary{background:var(--accent); color:var(--accent-ink); border:0}
+button.secondary,a.secondary{background:transparent; color:var(--ink); border:1.5px solid var(--line)}
+button.secondary[aria-pressed=true]{background:var(--accent); color:var(--accent-ink); border-color:var(--accent)}
+button.link{background:none; border:0; color:var(--muted); font:inherit; text-decoration:underline; text-underline-offset:3px; cursor:pointer; padding:.5rem}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent); outline-offset:3px}
+button:disabled{opacity:.4; cursor:default}
+
+.field{display:block; margin-bottom:1.5rem}
+.field > span{display:block; color:var(--muted); font-size:.9375rem; margin-bottom:.375rem}
+input[type=text],input[type=datetime-local],textarea{
+  width:100%; font:inherit; color:var(--ink); background:var(--surface);
+  border:1.5px solid var(--line); border-radius:.75rem; padding:.75rem .875rem
+}
+textarea{min-height:6rem; resize:vertical}
+.scale{display:grid; grid-template-columns:repeat(10,1fr); gap:.25rem}
+.scale button{
+  font:inherit; font-variant-numeric:tabular-nums; aspect-ratio:1; border-radius:.5rem;
+  border:1.5px solid var(--line); background:var(--surface); color:var(--ink); cursor:pointer; padding:0
+}
+.scale button[aria-pressed=true]{background:var(--accent); color:var(--accent-ink); border-color:var(--accent)}
+.scale-ends{display:flex; justify-content:space-between; color:var(--muted); font-size:.8125rem; margin-top:.375rem}
+.chips{display:flex; flex-wrap:wrap; gap:.5rem}
+.chips button{
+  font:inherit; font-size:.9375rem; border:1.5px solid var(--line); background:var(--surface);
+  color:var(--ink); border-radius:999px; padding:.4rem .875rem; cursor:pointer
+}
+.chips button[aria-pressed=true]{background:var(--accent); color:var(--accent-ink); border-color:var(--accent)}
+
+.stage{display:grid; place-items:center; margin:1rem 0 1.5rem}
+.stage svg{width:min(64vw,15rem); height:auto; overflow:visible}
+.stage .track{fill:none; stroke:var(--line); stroke-width:2}
+.stage .fill{fill:var(--soft)}
+.stage .dot{fill:var(--accent)}
+.stage .arc{fill:none; stroke:var(--accent); stroke-width:3; stroke-linecap:round; transition:stroke-dashoffset 1s linear}
+.stage-label{font-family:"Literata",Georgia,serif; font-size:1.5rem; text-align:center; min-height:2.2rem; margin-top:1rem}
+.stage-sub{color:var(--muted); text-align:center; font-size:.9375rem}
+.big-time{font-family:"Literata",Georgia,serif; font-size:2.75rem; font-variant-numeric:tabular-nums; fill:var(--ink)}
+.ground{border-left:3px solid var(--accent); padding:.25rem 0 .25rem 1rem; margin:0 0 1.25rem}
+.ground p{margin:0}
+.ground .count{font-family:"Literata",Georgia,serif; font-size:1.375rem}
+.prompt{min-height:4.5rem; font-family:"Literata",Georgia,serif; font-size:1.25rem; line-height:1.4; text-align:center; max-width:none; transition:opacity .6s}
+.jump{display:flex; justify-content:center; gap:1rem}
+
+ul.plain{list-style:none; padding:0; margin:0 0 1.5rem}
+ul.plain li{padding:.75rem 0; border-bottom:1px solid var(--line)}
+ul.plain li:first-child{border-top:1px solid var(--line)}
+ul.pick li button{
+  background:none; border:0; font:inherit; color:var(--ink); width:100%; text-align:left; padding:0; cursor:pointer;
+  display:flex; justify-content:space-between; gap:1rem
+}
+ul.pick li button[aria-pressed=true]{color:var(--accent); font-weight:700}
+.people a{color:var(--ink); display:flex; justify-content:space-between; text-decoration:none}
+.people a span:last-child{color:var(--accent); font-weight:700}
+.empty{color:var(--muted); font-size:.9375rem}
+
+/* reasons */
+ul.reasons{list-style:none; padding:0; margin:0 0 1.5rem}
+ul.reasons li{font-family:"Literata",Georgia,serif; font-size:1.3125rem; line-height:1.4; padding:1rem 0; border-bottom:1px solid var(--line)}
+ul.reasons li:first-child{border-top:1px solid var(--line)}
+
+/* tape */
+ol.tape{list-style:none; padding:0; margin:0 0 1.5rem; counter-reset:t}
+ol.tape li{position:relative; padding:0 0 1.5rem 2.25rem; counter-increment:t}
+ol.tape li::before{
+  content:counter(t); position:absolute; left:0; top:.1rem; width:1.5rem; height:1.5rem; border-radius:50%;
+  border:1.5px solid var(--accent); color:var(--accent); font-size:.8125rem; display:grid; place-items:center
+}
+ol.tape li::after{content:""; position:absolute; left:.72rem; top:1.9rem; bottom:.4rem; width:1.5px; background:var(--line)}
+ol.tape li:last-child::after{display:none}
+ol.tape h2{font-size:1.1875rem; margin-bottom:.25rem}
+ol.tape p{margin:0; white-space:pre-wrap}
+ol.tape .q{color:var(--muted); font-style:italic}
+ol.tape textarea{min-height:4.5rem; margin-top:.25rem}
+
+/* log */
+.summary{display:grid; grid-template-columns:repeat(2,1fr); gap:1rem; margin:0 0 1.5rem}
+.summary div{border-top:1.5px solid var(--ink); padding-top:.5rem}
+.summary b{display:block; font-family:"Literata",Georgia,serif; font-weight:400; font-size:2rem; line-height:1.1; font-variant-numeric:tabular-nums}
+.summary span{color:var(--muted); font-size:.875rem}
+ul.log{list-style:none; padding:0; margin:0 0 1.5rem}
+ul.log > li{border-bottom:1px solid var(--line)}
+ul.log > li:first-child{border-top:1px solid var(--line)}
+.entry-head{
+  background:none; border:0; font:inherit; color:var(--ink); width:100%; text-align:left; cursor:pointer;
+  padding:.875rem 0; display:grid; grid-template-columns:1fr auto; gap:.125rem 1rem
+}
+.entry-head .when{font-weight:700}
+.entry-head .what{color:var(--muted); font-size:.9375rem; grid-column:1}
+.entry-head .out{grid-row:1 / span 2; grid-column:2; align-self:center; font-size:.9375rem}
+.out.no{color:var(--accent); font-weight:700}
+.out.yes{color:var(--ink)}
+.out.unk{color:var(--muted)}
+.entry-body{padding:0 0 1.25rem}
+.entry-body dl{margin:0 0 1rem; display:grid; grid-template-columns:auto 1fr; gap:.375rem 1rem}
+.entry-body dt{color:var(--muted); font-size:.9375rem}
+.entry-body dd{margin:0; white-space:pre-wrap}
+
+.tabs{
+  position:fixed; left:0; right:0; bottom:0; z-index:10; display:flex; justify-content:center;
+  background:var(--bg); border-top:1px solid var(--line); padding-bottom:env(safe-area-inset-bottom,0px)
+}
+.tabs button{
+  flex:1; max-width:8rem; background:none; border:0; font:inherit; font-size:.9375rem; color:var(--muted);
+  padding:.875rem .25rem; cursor:pointer; position:relative
+}
+.tabs button[aria-current=page]{color:var(--ink); font-weight:700}
+.tabs button[aria-current=page]::before{content:""; position:absolute; top:-1px; left:30%; right:30%; height:2px; background:var(--accent)}
+
+footer{color:var(--muted); font-size:.8125rem; text-align:center; padding-top:1.5rem}
+footer a{color:var(--muted)}
+@media (prefers-reduced-motion: reduce){ section.active{animation:none} .stage .arc{transition:none} }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="progress" id="progress" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+    <div class="clock" id="clock"></div>
+    <button class="icon-btn" id="editBtn" aria-label="Edit activities, affirmations and people">Edit</button>
+  </header>
+
+  <!-- ================= CRAVING WALKTHROUGH ================= -->
+  <div class="view on" id="view-flow">
+
+  <section data-step="0" class="active">
+    <h1>You opened this.<br>That’s the first move.</h1>
+    <p class="lede">Five steps. One at a time. You don’t have to decide anything yet.</p>
+    <div class="spacer"></div>
+    <p class="empty" id="tally"></p>
+    <div class="actions"><button class="primary" data-go="1">Start</button></div>
+  </section>
+
+  <section data-step="1">
+    <p class="num">Step 1 of 5</p>
+    <h1>Stop. Change where you are.</h1>
+    <p>Put down whatever you’re doing. Go to a different room, step outside, or leave the place you’re in.</p>
+    <p class="lede">Moving your body breaks the loop your mind is in.</p>
+    <div class="spacer"></div>
+    <div class="actions"><button class="primary" data-go="2">I’ve moved</button></div>
+  </section>
+
+  <section data-step="2">
+    <p class="num">Step 2 of 5</p>
+    <h1>Name it.</h1>
+    <label class="field"><span>What’s the craving? (optional)</span>
+      <input type="text" id="cravingName" autocomplete="off" placeholder="Just a word or two">
+    </label>
+    <div class="field">
+      <span id="scaleLbl1">How strong is it right now?</span>
+      <div class="scale" id="scaleStart" role="group" aria-labelledby="scaleLbl1"></div>
+      <div class="scale-ends"><span>Barely</span><span>Overwhelming</span></div>
+    </div>
+    <div class="field">
+      <span id="trigLbl">What’s behind it? Pick any that fit.</span>
+      <div class="chips" id="trigChips" role="group" aria-labelledby="trigLbl"></div>
+    </div>
+    <label class="field"><span>What’s going on? Where you are, who you’re with, what happened. (optional)</span>
+      <textarea id="cravingNote"></textarea>
+    </label>
+    <div class="actions"><button class="primary" id="startTimer" disabled>Start 15-minute timer</button></div>
+  </section>
+
+  <section data-step="3">
+    <p class="num">Step 3 of 5</p>
+    <div id="breathePart">
+      <h2>Box breathe</h2>
+      <p class="lede">Follow the dot around the square. Four rounds.</p>
+      <div class="stage">
+        <svg viewBox="-20 -20 240 240" aria-hidden="true">
+          <rect class="fill" id="breathFill" x="100" y="100" width="0" height="0" rx="18"/>
+          <rect class="track" x="0" y="0" width="200" height="200" rx="18"/>
+          <circle class="dot" id="breathDot" cx="0" cy="200" r="9"/>
+        </svg>
+        <div class="stage-label" id="breathLabel" aria-live="polite">Breathe in</div>
+        <div class="stage-sub" id="breathCount">Round 1 of 4</div>
+      </div>
+      <div class="spacer"></div>
+      <div class="actions"><button class="primary" id="toGround">Done breathing</button></div>
+    </div>
+    <div id="groundPart" hidden>
+      <h2>Ground yourself</h2>
+      <p class="lede">Look around and name them, out loud or in your head.</p>
+      <div class="ground" aria-live="polite"><p class="count" id="groundText"></p></div>
+      <div class="spacer"></div>
+      <div class="actions"><button class="primary" id="groundNext">Next</button></div>
+    </div>
+  </section>
+
+  <section data-step="4">
+    <p class="num">Step 4 of 5</p>
+    <h2>Surf the urge</h2>
+    <div class="stage">
+      <svg viewBox="0 0 220 220" aria-hidden="true">
+        <circle class="track" cx="110" cy="110" r="96"/>
+        <circle class="arc" id="ring" cx="110" cy="110" r="96" transform="rotate(-90 110 110)"/>
+        <text class="big-time" id="ringTime" x="110" y="112" text-anchor="middle" dominant-baseline="middle">15:00</text>
+      </svg>
+    </div>
+    <p class="prompt" id="surfPrompt" aria-live="polite"></p>
+    <div class="jump">
+      <button class="link" data-tab="reasons">Read my reasons</button>
+      <button class="link" data-tab="tape">Play the tape forward</button>
+    </div>
+    <div class="spacer"></div>
+    <div class="actions" id="surfActions">
+      <p class="empty" style="text-align:center;max-width:none">The check-in opens when the timer ends.</p>
+    </div>
+    <div class="actions" id="checkIn" hidden>
+      <h2 style="text-align:center">Time’s up. Still craving?</h2>
+      <button class="primary" data-go="6">No, it passed</button>
+      <button class="secondary" data-go="5">Yes, still there</button>
+    </div>
+  </section>
+
+  <section data-step="5">
+    <p class="num">Step 5 of 5</p>
+    <h1>Change your state.</h1>
+    <p>Spend 5–10 minutes on something physical and safe, or go be around people.</p>
+    <h2>Pick one</h2>
+    <ul class="plain pick" id="activityList"></ul>
+    <h2>Or reach someone</h2>
+    <ul class="plain people" id="peopleList"></ul>
+    <div class="spacer"></div>
+    <div class="actions"><button class="primary" id="startMove">Start 10 minutes</button></div>
+    <p class="clock" id="moveClock" style="text-align:center;margin-top:1rem"></p>
+    <div class="actions"><button class="secondary" id="moveDone" data-go="6" disabled>I’m done</button></div>
+    <p class="empty" id="moveNote" style="text-align:center;max-width:none;margin-top:.75rem">Start the timer. “I’m done” unlocks when it ends.</p>
+  </section>
+
+  <section data-step="6">
+    <h1 id="finishTitle">Check in.</h1>
+    <div class="field">
+      <span id="scaleLbl2">How strong is it now?</span>
+      <div class="scale" id="scaleEnd" role="group" aria-labelledby="scaleLbl2"></div>
+      <div class="scale-ends"><span>Barely</span><span>Overwhelming</span></div>
+    </div>
+    <p id="compare" class="lede"></p>
+    <div class="field">
+      <span id="usedLbl">Did you use?</span>
+      <div class="row" role="group" aria-labelledby="usedLbl">
+        <button class="secondary" id="usedNo" aria-pressed="false">No</button>
+        <button class="secondary" id="usedYes" aria-pressed="false">Yes</button>
+      </div>
+    </div>
+    <p id="usedMsg" class="lede"></p>
+    <div class="spacer"></div>
+    <div class="actions">
+      <button class="primary" id="finish" disabled>Save to log</button>
+    </div>
+  </section>
+
+  <section data-step="edit">
+    <h1>Your lists</h1>
+    <label class="field"><span>Safe physical activities, one per line</span>
+      <textarea id="editActivities"></textarea>
+    </label>
+    <label class="field"><span>Affirmations shown during the timer, one per line</span>
+      <textarea id="editAffirmations"></textarea>
+    </label>
+    <label class="field"><span>People to reach, one per line as: Name, phone</span>
+      <textarea id="editPeople" placeholder="Maya, 412 555 0134"></textarea>
+    </label>
+    <p class="empty">Saved only on this device.</p>
+    <div class="spacer"></div>
+    <div class="actions">
+      <button class="primary" id="saveEdit">Save lists</button>
+      <button class="secondary" id="cancelEdit">Back</button>
+    </div>
+  </section>
+  </div>
+
+  <!-- ================= REASONS ================= -->
+  <div class="view" id="view-reasons">
+    <div class="page">
+      <h1>Why I’m doing this.</h1>
+      <div id="reasonsRead">
+        <ul class="reasons" id="reasonsList"></ul>
+        <p class="empty" id="reasonsEmpty">Add what you’re protecting: people, plans, how you want to feel, who you want to be.</p>
+        <div class="actions"><button class="secondary" id="reasonsEditBtn">Edit reasons</button></div>
+      </div>
+      <div id="reasonsEdit" hidden>
+        <label class="field"><span>One reason per line</span>
+          <textarea id="reasonsText" style="min-height:14rem"></textarea>
+        </label>
+        <div class="actions">
+          <button class="primary" id="reasonsSave">Save reasons</button>
+          <button class="secondary" id="reasonsCancel">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= TAPE ================= -->
+  <div class="view" id="view-tape">
+    <div class="page">
+      <h1>Play the tape forward.</h1>
+      <p class="lede">Follow it past the first few minutes. Write these while you’re steady, so they’re here when you’re not.</p>
+      <ol class="tape" id="tapeList"></ol>
+      <div class="actions" id="tapeReadActions"><button class="secondary" id="tapeEditBtn">Edit</button></div>
+      <div class="actions" id="tapeEditActions" hidden>
+        <button class="primary" id="tapeSave">Save</button>
+        <button class="secondary" id="tapeCancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= LOG ================= -->
+  <div class="view" id="view-log">
+    <div class="page" id="logMain">
+      <h1>Log</h1>
+      <div class="summary" id="summary"></div>
+      <p class="lede" id="topTriggers"></p>
+      <ul class="log" id="logList"></ul>
+      <p class="empty" id="logEmpty">Nothing logged yet. Each time you start the timer, an entry is saved here.</p>
+      <div class="actions">
+        <button class="secondary" id="manualBtn">Log a craving</button>
+        <button class="link" id="backupBtn">Save a backup</button>
+        <button class="link" id="restoreBtn">Restore from backup</button>
+        <input type="file" id="restoreFile" accept="application/json,.json" hidden>
+      </div>
+    </div>
+    <div class="page" id="manualForm" hidden>
+      <h1>Log a craving</h1>
+      <label class="field"><span>When</span><input type="datetime-local" id="mWhen"></label>
+      <label class="field"><span>What was the craving? (optional)</span><input type="text" id="mName" autocomplete="off"></label>
+      <div class="field">
+        <span id="mScaleLbl">How strong was it?</span>
+        <div class="scale" id="mScale" role="group" aria-labelledby="mScaleLbl"></div>
+        <div class="scale-ends"><span>Barely</span><span>Overwhelming</span></div>
+      </div>
+      <div class="field">
+        <span id="mTrigLbl">What was behind it?</span>
+        <div class="chips" id="mChips" role="group" aria-labelledby="mTrigLbl"></div>
+      </div>
+      <label class="field"><span>What was going on? (optional)</span><textarea id="mNote"></textarea></label>
+      <div class="field">
+        <span id="mUsedLbl">Did you use?</span>
+        <div class="row" role="group" aria-labelledby="mUsedLbl">
+          <button class="secondary" id="mNo" aria-pressed="false">No</button>
+          <button class="secondary" id="mYes" aria-pressed="false">Yes</button>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="primary" id="mSave">Save to log</button>
+        <button class="secondary" id="mCancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>Need more support right now? SAMHSA helpline <a href="tel:18006624357">1-800-662-4357</a>, or call or text <a href="tel:988">988</a></footer>
+</main>
+
+<nav class="tabs" aria-label="Sections">
+  <button data-tab="flow" aria-current="page">Craving</button>
+  <button data-tab="reasons">Reasons</button>
+  <button data-tab="tape">Tape</button>
+  <button data-tab="log">Log</button>
+</nav>
+
+<script>
+(function(){
+  const $ = s => document.querySelector(s);
+  const store = {
+    get(k,d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+    set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+  };
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+
+  const TRIGGERS = ["Stress","Boredom","Lonely","Tired","Anxious","Sad","Angry","Hungry","Celebrating","Can’t sleep","In pain","A person","A place","Had access","Other"];
+  const DEFAULT_ACTIVITIES = ["Walk around the block","Cold water on your face and wrists","20 push-ups or squats","Stretch for five minutes","Dance to one loud song","Take a shower"];
+  const DEFAULT_SURF = [
+    "Notice where you feel it in your body.",
+    "You don’t have to do anything with it. Just watch.",
+    "Is it rising, cresting, or starting to fall?",
+    "Breathe into the spot where it’s strongest.",
+    "Cravings are waves. They build, peak, and pass.",
+    "Describe it to yourself: tight, hot, buzzing, heavy?",
+    "It feels permanent. It isn’t.",
+    "Let it be there without feeding it."
+  ];
+  const TAPE = [
+    { key:"minutes",  title:"The first few minutes", q:"How do I actually feel? Is it what I wanted, or less than I remembered?" },
+    { key:"tonight",  title:"Later tonight",         q:"Where am I, who’s around, what am I hiding or avoiding?" },
+    { key:"morning",  title:"Tomorrow morning",      q:"How do I feel when I wake up? What do I have to face?" },
+    { key:"week",     title:"Next week",             q:"What does it cost: money, trust, sleep, school, progress?" },
+    { key:"instead",  title:"What I’ll wish I’d done", q:"If I could come back to right now, what would I tell myself?" }
+  ];
+
+  let activities = store.get("activities", DEFAULT_ACTIVITIES);
+  let people = store.get("people", []);
+  let SURF = store.get("affirmations", DEFAULT_SURF);
+  let reasons = store.get("reasons", []);
+  let tape = store.get("tape", {});
+  let log = store.get("log", []).map(e => e.id ? e : { id:uid(), at:e.at, start:e.start??null, end:e.end??null, triggers:[], name:"", note:"", used:null, source:"app" });
+  const saveLog = () => store.set("log", log);
+
+  const state = { step:0, lastStep:0, start:null, end:null, used:null, triggers:[], timerEnd:null, moveEnd:null, entryId:null };
+  let audio = null;
+
+  // ---------- tabs ----------
+  let currentTab = "flow";
+  function showTab(t){
+    currentTab = t;
+    document.querySelectorAll(".view").forEach(v => v.classList.toggle("on", v.id === "view-"+t));
+    document.querySelectorAll(".tabs button").forEach(b => { if (b.dataset.tab === t) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); });
+    $("#progress").style.visibility = t === "flow" ? "visible" : "hidden";
+    $("#editBtn").hidden = t !== "flow" || state.step === "edit";
+    if (t === "reasons") renderReasons();
+    if (t === "tape") renderTape(false);
+    if (t === "log") { $("#manualForm").hidden = true; $("#logMain").hidden = false; renderLog(); }
+    window.scrollTo(0,0);
+  }
+  document.addEventListener("click", e => {
+    const t = e.target.closest("[data-tab]"); if (t) showTab(t.dataset.tab);
+  });
+
+  // ---------- flow navigation ----------
+  function go(n){
+    if (n !== "edit") state.lastStep = n;
+    state.step = n;
+    document.querySelectorAll("#view-flow section").forEach(s => s.classList.toggle("active", s.dataset.step == n));
+    document.querySelectorAll("#progress span").forEach((b,i) => b.classList.toggle("on", typeof n === "number" && n >= 1 && i < Math.min(n,5)));
+    $("#editBtn").hidden = n === "edit";
+    if (n === 0) renderTally();
+    if (n === 3) startBreathing(); else stopBreathing();
+    if (n === 4) startSurf();
+    if (n === 5) renderStep5();
+    if (n === 6) renderFinish();
+    if (state.timerEnd) saveSession();
+    window.scrollTo(0,0);
+    const h = document.querySelector("section.active h1, section.active h2");
+    if (h){ h.setAttribute("tabindex","-1"); h.focus({preventScroll:true}); }
+  }
+  document.addEventListener("click", e => {
+    const b = e.target.closest("[data-go]");
+    if (b && !b.disabled) go(Number(b.dataset.go));
+  });
+  document.querySelectorAll('[data-go="1"]').forEach(btn => btn.addEventListener("click", resetFlow, true));
+  function resetFlow(){
+    try{ audio = audio || new (window.AudioContext||window.webkitAudioContext)(); audio.resume(); }catch(e){}
+    Object.assign(state,{start:null,end:null,used:null,triggers:[],timerEnd:null,moveEnd:null,entryId:null});
+    $("#cravingName").value = ""; $("#cravingNote").value = "";
+    buildScale("#scaleStart", v => { state.start = v; $("#startTimer").disabled = false; });
+    buildChips("#trigChips", state.triggers);
+    $("#startTimer").disabled = true;
+    $("#checkIn").hidden = true; $("#surfActions").hidden = false;
+    $("#moveClock").textContent = ""; $("#startMove").disabled = false;
+    $("#moveDone").disabled = true; $("#moveNote").hidden = false;
+  }
+
+  // ---------- inputs ----------
+  function buildScale(sel, onPick, preset){
+    const el = $(sel); el.innerHTML = "";
+    for (let i=1;i<=10;i++){
+      const b = document.createElement("button");
+      b.type = "button"; b.textContent = i; b.setAttribute("aria-pressed", preset===i ? "true" : "false");
+      b.addEventListener("click", () => {
+        el.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed","false"));
+        b.setAttribute("aria-pressed","true"); onPick(i);
+      });
+      el.appendChild(b);
+    }
+  }
+  function buildChips(sel, arr){
+    const el = $(sel); el.innerHTML = "";
+    TRIGGERS.forEach(t => {
+      const b = document.createElement("button");
+      b.type = "button"; b.textContent = t; b.setAttribute("aria-pressed", arr.includes(t) ? "true" : "false");
+      b.addEventListener("click", () => {
+        const i = arr.indexOf(t);
+        if (i >= 0) arr.splice(i,1); else arr.push(t);
+        b.setAttribute("aria-pressed", i >= 0 ? "false" : "true");
+      });
+      el.appendChild(b);
+    });
+  }
+  function yesNo(noSel, yesSel, onPick){
+    const no = $(noSel), yes = $(yesSel);
+    const set = v => { no.setAttribute("aria-pressed", v===false); yes.setAttribute("aria-pressed", v===true); };
+    no.onclick = () => { set(false); onPick(false); };
+    yes.onclick = () => { set(true); onPick(true); };
+    set(null);
+  }
+  buildScale("#scaleStart", v => { state.start = v; $("#startTimer").disabled = false; });
+  buildChips("#trigChips", state.triggers);
+
+  // ---------- timer + log entry ----------
+  const fmt = ms => { const s = Math.max(0,Math.ceil(ms/1000)); return Math.floor(s/60)+":"+String(s%60).padStart(2,"0"); };
+  $("#startTimer").addEventListener("click", () => {
+    const entry = {
+      id: uid(), at: Date.now(), source:"app",
+      name: $("#cravingName").value.trim(), note: $("#cravingNote").value.trim(),
+      triggers: state.triggers.slice(), start: state.start, end: null, used: null
+    };
+    log.push(entry); saveLog();
+    state.entryId = entry.id;
+    state.timerEnd = Date.now() + 15*60*1000;
+    keepAwake(); go(3); saveSession();
+  });
+  function chime(){
+    try{ navigator.vibrate && navigator.vibrate([200,120,200]); }catch(e){}
+    if (!audio) return;
+    try{
+      [0,0.35,1.8,2.15,3.6,3.95].forEach((t,i) => {
+        const o = audio.createOscillator(), g = audio.createGain();
+        o.frequency.value = i%2 ? 659.25 : 523.25; o.type = "sine";
+        g.gain.setValueAtTime(0.0001, audio.currentTime+t);
+        g.gain.exponentialRampToValueAtTime(0.45, audio.currentTime+t+0.05);
+        g.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime+t+1.4);
+        o.connect(g).connect(audio.destination); o.start(audio.currentTime+t); o.stop(audio.currentTime+t+1.5);
+      });
+    }catch(e){}
+  }
+  let wake = null;
+  async function keepAwake(){ try{ if ("wakeLock" in navigator) wake = await navigator.wakeLock.request("screen"); }catch(e){} }
+  function releaseAwake(){ try{ wake && wake.release(); }catch(e){} wake = null; }
+  function saveSession(){ store.set("session", { start:state.start, timerEnd:state.timerEnd, moveEnd:state.moveEnd, step:state.lastStep, entryId:state.entryId }); }
+  const R = 2*Math.PI*96;
+  $("#ring").style.strokeDasharray = R;
+  let timerFired = false;
+  setInterval(() => {
+    const clock = $("#clock");
+    if (state.timerEnd && (state.step===3 || state.step===4 || (state.step==="edit" && state.lastStep>=3 && state.lastStep<=4))){
+      const left = state.timerEnd - Date.now();
+      clock.textContent = left > 0 ? fmt(left)+" left" : (currentTab === "flow" ? "" : "Timer done");
+      $("#ringTime").textContent = fmt(left);
+      $("#ring").style.strokeDashoffset = R * (1 - Math.max(0,left)/(15*60*1000));
+      if (left <= 0 && !timerFired){
+        timerFired = true; chime();
+        if (state.lastStep === 4){ $("#checkIn").hidden = false; $("#surfActions").hidden = true; $("#surfPrompt").textContent = ""; }
+      }
+      if (left > 0) timerFired = false;
+    } else if (state.moveEnd && state.lastStep===5){
+      const left = state.moveEnd - Date.now();
+      $("#moveClock").textContent = left > 0 ? fmt(left)+" left" : "Ten minutes done.";
+      clock.textContent = currentTab === "flow" ? "" : (left > 0 ? fmt(left)+" left" : "");
+      if (left <= 0){ state.moveEnd = null; chime(); $("#moveDone").disabled = false; $("#moveNote").hidden = true; saveSession(); }
+    } else clock.textContent = "";
+  }, 250);
+
+  // ---------- box breathing ----------
+  const PHASES = ["Breathe in","Hold","Breathe out","Hold"];
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let raf = null, bStart = 0;
+  function startBreathing(){
+    $("#breathePart").hidden = false; $("#groundPart").hidden = true;
+    bStart = performance.now(); cancelAnimationFrame(raf); tick();
+  }
+  function stopBreathing(){ cancelAnimationFrame(raf); raf = null; }
+  function tick(){
+    const t = (performance.now() - bStart)/1000;
+    const round = Math.floor(t/16), within = t % 16, phase = Math.floor(within/4), p = (within%4)/4;
+    let x,y;
+    if (phase===0){ x=0; y=200-200*p; } else if (phase===1){ x=200*p; y=0; }
+    else if (phase===2){ x=200; y=200*p; } else { x=200-200*p; y=200; }
+    if (!reduce){ $("#breathDot").setAttribute("cx",x); $("#breathDot").setAttribute("cy",y); }
+    const size = phase===0 ? p : phase===1 ? 1 : phase===2 ? 1-p : 0, s = 40 + 140*size, f = $("#breathFill");
+    f.setAttribute("x",100-s/2); f.setAttribute("y",100-s/2); f.setAttribute("width",s); f.setAttribute("height",s);
+    const lbl = PHASES[phase]+", "+(4-Math.floor(within%4));
+    if ($("#breathLabel").textContent !== lbl) $("#breathLabel").textContent = lbl;
+    $("#breathCount").textContent = round < 4 ? "Round "+(round+1)+" of 4" : "Keep going as long as you like";
+    raf = requestAnimationFrame(tick);
+  }
+
+  // ---------- grounding ----------
+  const GROUND = ["5 things you can see","4 things you can feel","3 things you can hear","2 things you can smell","1 thing you can taste"];
+  let gi = 0;
+  $("#toGround").addEventListener("click", () => {
+    stopBreathing(); gi = 0;
+    $("#breathePart").hidden = true; $("#groundPart").hidden = false;
+    $("#groundText").textContent = GROUND[0]; $("#groundNext").textContent = "Next";
+  });
+  $("#groundNext").addEventListener("click", () => {
+    gi++;
+    if (gi < GROUND.length){
+      $("#groundText").textContent = GROUND[gi];
+      if (gi === GROUND.length-1) $("#groundNext").textContent = "On to the urge";
+    } else go(4);
+  });
+
+  // ---------- urge surfing ----------
+  let si = 0, surfInt = null;
+  function startSurf(){
+    si = 0; showSurf(); clearInterval(surfInt);
+    surfInt = setInterval(() => { if (state.step!==4 || !$("#checkIn").hidden) return; si=(si+1)%SURF.length; showSurf(); }, 20000);
+    if (state.timerEnd && state.timerEnd <= Date.now()){ $("#checkIn").hidden = false; $("#surfActions").hidden = true; }
+  }
+  function showSurf(){
+    const el = $("#surfPrompt"); el.style.opacity = 0;
+    setTimeout(() => { el.textContent = SURF[si % SURF.length]; el.style.opacity = 1; }, reduce ? 0 : 400);
+  }
+
+  // ---------- step 5 ----------
+  function renderStep5(){
+    const al = $("#activityList"); al.innerHTML = "";
+    activities.forEach(a => {
+      const li = document.createElement("li"), b = document.createElement("button");
+      b.type="button"; b.setAttribute("aria-pressed","false"); b.innerHTML = "<span></span><span></span>";
+      b.firstChild.textContent = a;
+      b.addEventListener("click", () => {
+        al.querySelectorAll("button").forEach(x => { x.setAttribute("aria-pressed","false"); x.lastChild.textContent=""; });
+        b.setAttribute("aria-pressed","true"); b.lastChild.textContent = "✓";
+      });
+      li.appendChild(b); al.appendChild(li);
+    });
+    const pl = $("#peopleList"); pl.innerHTML = "";
+    if (!people.length){
+      const li = document.createElement("li"); li.className = "empty";
+      li.innerHTML = 'No one added yet. <button class="link" type="button" id="addPeople">Add people</button>';
+      pl.appendChild(li); $("#addPeople").addEventListener("click", openEdit);
+    } else people.forEach(p => {
+      const li = document.createElement("li"), a = document.createElement("a");
+      a.href = "tel:" + p.phone.replace(/[^\d+]/g,"");
+      a.innerHTML = "<span></span><span>Call</span>"; a.firstChild.textContent = p.name;
+      li.appendChild(a); pl.appendChild(li);
+    });
+  }
+  $("#startMove").addEventListener("click", () => { state.moveEnd = Date.now()+10*60*1000; $("#startMove").disabled = true; keepAwake(); saveSession(); });
+
+  // ---------- finish ----------
+  function renderFinish(){
+    state.end = null; state.used = null;
+    $("#compare").textContent = ""; $("#usedMsg").textContent = "";
+    $("#finishTitle").textContent = "Check in.";
+    $("#finish").disabled = true;
+    buildScale("#scaleEnd", v => {
+      state.end = v;
+      if (state.start){
+        const d = state.start - v;
+        $("#compare").textContent = d > 0 ? `From ${state.start} down to ${v}.` : d === 0 ? `Still a ${v}, and you’re still here.` : `It’s at ${v}. If it’s climbing, reach someone now.`;
+      }
+    });
+    yesNo("#usedNo", "#usedYes", v => {
+      state.used = v; $("#finish").disabled = false;
+      $("#finishTitle").textContent = v ? "Thank you for being honest." : "You rode it out.";
+      $("#usedMsg").textContent = v
+        ? "One slip doesn’t erase the work you’ve done. Reach out to someone you trust, and start again from here."
+        : "That craving came and you didn’t follow it. That’s the whole thing.";
+    });
+  }
+  $("#finish").addEventListener("click", () => {
+    const e = log.find(x => x.id === state.entryId);
+    if (e){ e.end = state.end; e.used = state.used; e.finishedAt = Date.now(); }
+    else log.push({ id:uid(), at:Date.now(), source:"app", name:"", note:"", triggers:[], start:state.start, end:state.end, used:state.used });
+    saveLog();
+    state.timerEnd = null; state.moveEnd = null; state.entryId = null;
+    releaseAwake(); store.set("session", null);
+    go(0); showTab("log");
+  });
+  function renderTally(){
+    const n = log.length;
+    $("#tally").textContent = n ? `You’ve opened this for a craving ${n} time${n===1?"":"s"}.` : "";
+  }
+
+  // ---------- edit lists ----------
+  function openEdit(){
+    $("#editActivities").value = activities.join("\n");
+    $("#editAffirmations").value = SURF.join("\n");
+    $("#editPeople").value = people.map(p => p.name+", "+p.phone).join("\n");
+    go("edit");
+  }
+  $("#editBtn").addEventListener("click", openEdit);
+  $("#cancelEdit").addEventListener("click", () => go(state.lastStep));
+  $("#saveEdit").addEventListener("click", () => {
+    const lines = id => $(id).value.split("\n").map(s=>s.trim()).filter(Boolean);
+    activities = lines("#editActivities"); if (!activities.length) activities = DEFAULT_ACTIVITIES.slice();
+    SURF = lines("#editAffirmations"); if (!SURF.length) SURF = DEFAULT_SURF.slice();
+    people = lines("#editPeople").map(s => {
+      const i = s.lastIndexOf(","); if (i<0) return null;
+      const name = s.slice(0,i).trim(), phone = s.slice(i+1).trim();
+      return name && phone ? {name,phone} : null;
+    }).filter(Boolean);
+    store.set("activities", activities); store.set("people", people); store.set("affirmations", SURF);
+    go(state.lastStep);
+  });
+
+  // ---------- reasons ----------
+  function renderReasons(){
+    $("#reasonsRead").hidden = false; $("#reasonsEdit").hidden = true;
+    const ul = $("#reasonsList"); ul.innerHTML = "";
+    reasons.forEach(r => { const li = document.createElement("li"); li.textContent = r; ul.appendChild(li); });
+    $("#reasonsEmpty").hidden = reasons.length > 0;
+    $("#reasonsEditBtn").textContent = reasons.length ? "Edit reasons" : "Add reasons";
+  }
+  $("#reasonsEditBtn").addEventListener("click", () => {
+    $("#reasonsText").value = reasons.join("\n");
+    $("#reasonsRead").hidden = true; $("#reasonsEdit").hidden = false; $("#reasonsText").focus();
+  });
+  $("#reasonsCancel").addEventListener("click", renderReasons);
+  $("#reasonsSave").addEventListener("click", () => {
+    reasons = $("#reasonsText").value.split("\n").map(s=>s.trim()).filter(Boolean);
+    store.set("reasons", reasons); renderReasons();
+  });
+
+  // ---------- tape ----------
+  function renderTape(editing){
+    const ol = $("#tapeList"); ol.innerHTML = "";
+    TAPE.forEach(t => {
+      const li = document.createElement("li"), h = document.createElement("h2");
+      h.textContent = t.title; li.appendChild(h);
+      if (editing){
+        const ta = document.createElement("textarea");
+        ta.dataset.key = t.key; ta.placeholder = t.q; ta.value = tape[t.key] || "";
+        ta.setAttribute("aria-label", t.title); li.appendChild(ta);
+      } else {
+        const p = document.createElement("p");
+        if (tape[t.key]) p.textContent = tape[t.key]; else { p.textContent = t.q; p.className = "q"; }
+        li.appendChild(p);
+      }
+      ol.appendChild(li);
+    });
+    $("#tapeReadActions").hidden = editing; $("#tapeEditActions").hidden = !editing;
+    $("#tapeEditBtn").textContent = Object.values(tape).some(Boolean) ? "Edit" : "Write yours";
+  }
+  $("#tapeEditBtn").addEventListener("click", () => renderTape(true));
+  $("#tapeCancel").addEventListener("click", () => renderTape(false));
+  $("#tapeSave").addEventListener("click", () => {
+    document.querySelectorAll("#tapeList textarea").forEach(ta => { tape[ta.dataset.key] = ta.value.trim(); });
+    store.set("tape", tape); renderTape(false);
+  });
+
+  // ---------- log ----------
+  const fmtDate = ts => new Date(ts).toLocaleString(undefined, { weekday:"short", month:"short", day:"numeric", hour:"numeric", minute:"2-digit" });
+  const outText = u => u === false ? ["Didn’t use","no"] : u === true ? ["Used","yes"] : ["Not answered","unk"];
+  function renderLog(){
+    const sorted = log.slice().sort((a,b) => b.at - a.at);
+    const total = log.length, rode = log.filter(e => e.used === false).length;
+    const sum = $("#summary"); sum.innerHTML = "";
+    [[total, total===1 ? "craving logged" : "cravings logged"], [rode, "times you didn’t use"]].forEach(([n,l]) => {
+      const d = document.createElement("div"), b = document.createElement("b"), s = document.createElement("span");
+      b.textContent = n; s.textContent = l; d.append(b,s); sum.appendChild(d);
+    });
+    const counts = {};
+    log.forEach(e => (e.triggers||[]).forEach(t => counts[t] = (counts[t]||0)+1));
+    const top = Object.entries(counts).sort((a,b) => b[1]-a[1]).slice(0,3);
+    $("#topTriggers").textContent = top.length ? "Most common: " + top.map(([t,n]) => `${t} (${n})`).join(", ") : "";
+    $("#logEmpty").hidden = total > 0;
+    const ul = $("#logList"); ul.innerHTML = "";
+    sorted.forEach(e => {
+      const li = document.createElement("li");
+      const head = document.createElement("button"); head.className = "entry-head"; head.setAttribute("aria-expanded","false");
+      const when = document.createElement("span"); when.className = "when"; when.textContent = fmtDate(e.at);
+      const what = document.createElement("span"); what.className = "what";
+      what.textContent = [e.name, (e.triggers||[]).join(", ")].filter(Boolean).join(": ") || (e.start ? `Strength ${e.start}` : "Craving");
+      const [ot, oc] = outText(e.used);
+      const out = document.createElement("span"); out.className = "out " + oc; out.textContent = ot;
+      head.append(when, out, what);
+      const body = document.createElement("div"); body.className = "entry-body"; body.hidden = true;
+      const dl = document.createElement("dl");
+      const add = (k,v) => { if (v === "" || v == null) return; const dt = document.createElement("dt"), dd = document.createElement("dd"); dt.textContent = k; dd.textContent = v; dl.append(dt,dd); };
+      add("Craving", e.name);
+      add("Strength", e.start != null ? (e.end != null ? `${e.start} → ${e.end}` : `${e.start}`) : "");
+      add("Why", (e.triggers||[]).join(", "));
+      add("Notes", e.note);
+      if (e.source === "manual") add("Logged", "Added by hand");
+      body.appendChild(dl);
+      const lbl = document.createElement("p"); lbl.className = "empty"; lbl.style.margin = "0 0 .5rem"; lbl.textContent = "Did you use?";
+      const row = document.createElement("div"); row.className = "row";
+      [["No",false],["Yes",true]].forEach(([t,v]) => {
+        const b = document.createElement("button"); b.className = "secondary"; b.textContent = t;
+        b.setAttribute("aria-pressed", e.used === v);
+        b.addEventListener("click", () => { e.used = v; saveLog(); renderLog(); });
+        row.appendChild(b);
+      });
+      const del = document.createElement("button"); del.className = "link"; del.textContent = "Delete entry"; del.style.marginTop = ".75rem";
+      del.addEventListener("click", () => { if (confirm("Delete this entry? This can’t be undone.")){ log = log.filter(x => x.id !== e.id); saveLog(); renderLog(); } });
+      body.append(lbl, row, del);
+      head.addEventListener("click", () => { body.hidden = !body.hidden; head.setAttribute("aria-expanded", String(!body.hidden)); });
+      li.append(head, body); ul.appendChild(li);
+    });
+  }
+
+  // manual entry
+  let m = null;
+  $("#manualBtn").addEventListener("click", () => {
+    m = { start:null, used:null, triggers:[] };
+    const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    $("#mWhen").value = now.toISOString().slice(0,16);
+    $("#mName").value = ""; $("#mNote").value = "";
+    buildScale("#mScale", v => m.start = v);
+    buildChips("#mChips", m.triggers);
+    yesNo("#mNo", "#mYes", v => m.used = v);
+    $("#logMain").hidden = true; $("#manualForm").hidden = false; window.scrollTo(0,0);
+  });
+  $("#mCancel").addEventListener("click", () => { $("#manualForm").hidden = true; $("#logMain").hidden = false; });
+  $("#mSave").addEventListener("click", () => {
+    const at = $("#mWhen").value ? new Date($("#mWhen").value).getTime() : Date.now();
+    log.push({ id:uid(), at, source:"manual", name:$("#mName").value.trim(), note:$("#mNote").value.trim(), triggers:m.triggers.slice(), start:m.start, end:null, used:m.used });
+    saveLog(); $("#manualForm").hidden = true; $("#logMain").hidden = false; renderLog();
+  });
+
+  // backup / restore
+  $("#backupBtn").addEventListener("click", async () => {
+    const data = { app:"ride-it-out", version:2, savedAt:Date.now(), log, reasons, tape, activities, affirmations:SURF, people };
+    const name = "ride-it-out-backup-" + new Date().toISOString().slice(0,10) + ".json";
+    const blob = new Blob([JSON.stringify(data,null,2)], { type:"application/json" });
+    try{
+      const file = new File([blob], name, { type:"application/json" });
+      if (navigator.canShare && navigator.canShare({ files:[file] })){ await navigator.share({ files:[file], title:"Ride it out backup" }); return; }
+    }catch(err){ if (err && err.name === "AbortError") return; }
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  });
+  $("#restoreBtn").addEventListener("click", () => $("#restoreFile").click());
+  $("#restoreFile").addEventListener("change", async ev => {
+    const f = ev.target.files[0]; if (!f) return;
+    try{
+      const d = JSON.parse(await f.text());
+      if (d.app !== "ride-it-out") throw new Error("That file isn’t a Ride it out backup.");
+      if (!confirm("Replace everything in the app with this backup?")) return;
+      log = d.log || []; reasons = d.reasons || []; tape = d.tape || {};
+      activities = d.activities || DEFAULT_ACTIVITIES; SURF = d.affirmations || DEFAULT_SURF; people = d.people || [];
+      saveLog(); store.set("reasons",reasons); store.set("tape",tape); store.set("activities",activities); store.set("affirmations",SURF); store.set("people",people);
+      renderLog(); alert("Backup restored.");
+    }catch(err){ alert("Couldn’t restore: " + (err.message || "the file couldn’t be read.")); }
+    ev.target.value = "";
+  });
+
+  // ---------- resume ----------
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) return;
+    if (audio) audio.resume().catch(()=>{});
+    if ((state.timerEnd && state.timerEnd > Date.now()) || state.moveEnd) keepAwake();
+  });
+  const sess = store.get("session", null);
+  if (sess && (sess.timerEnd || sess.moveEnd) && Date.now() - (sess.timerEnd || 0) < 2*60*60*1000){
+    Object.assign(state, { start:sess.start, timerEnd:sess.timerEnd, moveEnd:sess.moveEnd, entryId:sess.entryId || null });
+    const s = sess.step >= 3 && sess.step <= 6 ? sess.step : 4;
+    if (s === 5 && sess.moveEnd) $("#startMove").disabled = true;
+    go(s === 3 ? 4 : s);
+  } else renderTally();
+})();
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});</script>
+</body>
+</html>
